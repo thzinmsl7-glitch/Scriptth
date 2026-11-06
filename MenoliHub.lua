@@ -1,9 +1,11 @@
+
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V47 - Ultra Combat & Movement
+-- Menoli Hub V48 - Ultra Optimized & Expanded
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 
 if game:GetService("CoreGui"):FindFirstChild("Menoli_Flat") then
@@ -28,8 +30,8 @@ local Theme = {
 -- UI BASE
 -- ==========================================
 local MainFrame = Instance.new("Frame", CORE_GUI)
-MainFrame.Size = UDim2.new(0, 480, 0, 280)
-MainFrame.Position = UDim2.new(0.5, -240, 0.5, -140)
+MainFrame.Size = UDim2.new(0, 500, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -160)
 MainFrame.BackgroundColor3 = Theme.Background
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -45,7 +47,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V47 - ULTRA COMBAT"
+Title.Text = "MENOLI V48 - ULTIMATE HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -148,24 +150,26 @@ FloatBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ==========================================
--- SISTEMA DE ABAS
+-- SISTEMA DE ABAS ORGANIZADO
 -- ==========================================
 local ContentFrame = Instance.new("Frame", MainFrame)
 ContentFrame.Size = UDim2.new(1, 0, 1, -40)
 ContentFrame.Position = UDim2.new(0, 0, 0, 40)
 ContentFrame.BackgroundTransparency = 1
 
-local TabContainer = Instance.new("Frame", ContentFrame)
+local TabContainer = Instance.new("ScrollingFrame", ContentFrame)
 TabContainer.Size = UDim2.new(1, 0, 0, 35)
 TabContainer.BackgroundTransparency = 1
-
-local UIPadTabs = Instance.new("UIPadding", TabContainer)
-UIPadTabs.PaddingLeft = UDim.new(0, 15)
-UIPadTabs.PaddingTop = UDim.new(0, 5)
+TabContainer.CanvasSize = UDim2.new(0, 450, 0, 0)
+TabContainer.ScrollBarThickness = 0
 
 local UIListTabs = Instance.new("UIListLayout", TabContainer)
 UIListTabs.FillDirection = Enum.FillDirection.Horizontal
-UIListTabs.Padding = UDim.new(0, 10)
+UIListTabs.Padding = UDim.new(0, 8)
+
+local UIPadTabs = Instance.new("UIPadding", TabContainer)
+UIPadTabs.PaddingLeft = UDim.new(0, 10)
+UIPadTabs.PaddingTop = UDim.new(0, 4)
 
 local PagesContainer = Instance.new("Frame", ContentFrame)
 PagesContainer.Size = UDim2.new(1, 0, 1, -40)
@@ -193,16 +197,18 @@ local function createPage(name)
 end
 
 local CombatPage = createPage("Combat")
-local SpeedPage = createPage("Speed")
+local MovePage = createPage("Move")
+local VisualPage = createPage("Visual")
+local TpPage = createPage("Teleport")
 
 local function createTabBtn(text, page)
     local btn = Instance.new("TextButton", TabContainer)
-    btn.Size = UDim2.new(0, 130, 0, 28)
+    btn.Size = UDim2.new(0, 105, 0, 28)
     btn.BackgroundColor3 = Theme.Box
     btn.Text = text
     btn.TextColor3 = Theme.Text
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
+    btn.TextSize = 11
     btn.AutoButtonColor = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
@@ -219,8 +225,11 @@ local function createTabBtn(text, page)
     return btn
 end
 
-local btn1 = createTabBtn("Combate / NoClip", CombatPage)
-local btn2 = createTabBtn("Movimentação", SpeedPage)
+local btn1 = createTabBtn("Combate", CombatPage)
+local btn2 = createTabBtn("Movimento", MovePage)
+local btn3 = createTabBtn("Visual / FPS", VisualPage)
+local btn4 = createTabBtn("Teleporte", TpPage)
+
 CombatPage.Visible = true
 btn1.BackgroundColor3 = Theme.Accent
 
@@ -317,14 +326,11 @@ local function makeSlider(parent, text, min, max, default, callback)
 end
 
 -- ==========================================
--- LÓGICA: HITKILL ULTRA-RÁPIDO
+-- 1. ABA COMBATE & NOCLIP
 -- ==========================================
-makeLabel(CombatPage, "Ações de Combate")
+makeLabel(CombatPage, "Automação de Combate")
 local HitkillEnabled = false
-
-makeToggle(CombatPage, "Ativar Hitkill em Mobs", function(state)
-    HitkillEnabled = state
-end)
+makeToggle(CombatPage, "Ativar Hitkill em Mobs", function(state) HitkillEnabled = state end)
 
 task.spawn(function()
     while true do
@@ -336,7 +342,6 @@ task.spawn(function()
                         if obj:IsA("Model") and obj ~= LocalPlayer.Character then
                             local hum = obj:FindFirstChildOfClass("Humanoid")
                             local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
-                            
                             if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
                                 if (root.Position - myRoot.Position).Magnitude < 30 then
                                     hum:TakeDamage(hum.MaxHealth * 10)
@@ -352,15 +357,9 @@ task.spawn(function()
     end
 end)
 
--- ==========================================
--- LÓGICA: NOCLIP UNIVERSAL
--- ==========================================
-makeLabel(CombatPage, "Navegação")
+makeLabel(CombatPage, "Navegação Livre")
 local NoclipEnabled = false
-
-makeToggle(CombatPage, "Ativar NoClip", function(state)
-    NoclipEnabled = state
-end)
+makeToggle(CombatPage, "Ativar NoClip", function(state) NoclipEnabled = state end)
 
 RunService.Stepped:Connect(function()
     if NoclipEnabled and LocalPlayer.Character then
@@ -375,27 +374,156 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ==========================================
--- LÓGICA: SPEED HACK UNIVERSAL
+-- 2. ABA MOVIMENTAÇÃO (SPEED & FLY)
 -- ==========================================
-makeLabel(SpeedPage, "Controles de Velocidade")
+makeLabel(MovePage, "Velocidade")
 local SpeedEnabled = false
 local CurrentSpeed = 16
 
-makeToggle(SpeedPage, "Ativar Speed Hack", function(state)
-    SpeedEnabled = state
-end)
-
-makeSlider(SpeedPage, "Velocidade do Personagem", 16, 250, 16, function(val)
-    CurrentSpeed = val
-end)
+makeToggle(MovePage, "Ativar Speed Hack", function(state) SpeedEnabled = state end)
+makeSlider(MovePage, "Velocidade WalkSpeed", 16, 250, 16, function(val) CurrentSpeed = val end)
 
 RunService.Heartbeat:Connect(function()
     if SpeedEnabled and LocalPlayer.Character then
         pcall(function()
             local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.WalkSpeed = CurrentSpeed
-            end
+            if hum then hum.WalkSpeed = CurrentSpeed end
         end)
+    end
+end)
+
+makeLabel(MovePage, "Sistema de Voo (Fly)")
+local FlyEnabled = false
+local FlySpeed = 50
+local bg, bv
+
+makeToggle(MovePage, "Ativar Fly", function(state)
+    FlyEnabled = state
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+    
+    if FlyEnabled then
+        bg = Instance.new("BodyGyro", root)
+        bg.P = 9e4
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.cframe = root.CFrame
+        
+        bv = Instance.new("BodyVelocity", root)
+        bv.velocity = Vector3.new(0, 0.1, 0)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        
+        task.spawn(function()
+            while FlyEnabled and LocalPlayer.Character and root do
+                local cam = workspace.CurrentCamera
+                local moveDir = Vector3.new()
+                local uis = UserInputService
+                
+                if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CoordinateFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CoordinateFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CoordinateFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CoordinateFrame.RightVector end
+                
+                bv.velocity = moveDir * FlySpeed
+                bg.cframe = cam.CoordinateFrame
+                RunService.RenderStepped:Wait()
+            end
+            if bg then bg:Destroy() end
+            if bv then bv:Destroy() end
+        end)
+    else
+        if bg then bg:Destroy() end
+        if bv then bv:Destroy() end
+    end
+end)
+
+makeSlider(MovePage, "Velocidade do Voo", 10, 200, 50, function(val) FlySpeed = val end)
+
+-- ==========================================
+-- 3. ABA VISUAL (FPS BOOST & REMOVER FOG)
+-- ==========================================
+makeLabel(VisualPage, "Desempenho Gráfico")
+makeToggle(VisualPage, "Ativar FPS Boost", function(state)
+    pcall(function()
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Material = state and Enum.Material.SmoothPlastic or v.Material
+                v.Reflectance = state and 0 or v.Reflectance
+            elseif v:IsA("Decal" ) or v:IsA("Texture") then
+                v.Transparency = state and 1 or 0
+            end
+        end
+        settings().Rendering.QualityLevel = state and Enum.QualityLevel.Level01 or Enum.QualityLevel.Automatic
+    end)
+end)
+
+makeToggle(VisualPage, "Remover Nevoeiro (Fog)", function(state)
+    pcall(function()
+        if state then
+            Lighting.FogEnd = 999999
+            Lighting.GlobalShadows = false
+            for _, v in ipairs(Lighting:GetChildren()) do
+                if v:IsA("Atmosphere") or v:IsA("Sky") then
+                    v.Parent = nil
+                end
+            end
+        else
+            Lighting.FogEnd = 1000
+            Lighting.GlobalShadows = true
+        end
+    end)
+end)
+
+-- ==========================================
+-- 4. ABA TELEPORTE DE PLAYERS
+-- ==========================================
+makeLabel(TpPage, "Teleporte para Jogadores")
+
+local function refreshPlayerList()
+    for _, child in ipairs(TpPage:GetChildren()) do
+        if child:IsA("TextButton") and child.Name == "PlayerTpBtn" then
+            child:Destroy()
+        end
+    end
+    
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local pBtn = Instance.new("TextButton", TpPage)
+            pBtn.Name = "PlayerTpBtn"
+            pBtn.Size = UDim2.new(1, 0, 0, 36)
+            pBtn.BackgroundColor3 = Theme.Box
+            pBtn.Text = "Ir até: " .. plr.Name
+            pBtn.TextColor3 = Theme.Text
+            pBtn.Font = Enum.Font.GothamBold
+            pBtn.TextSize = 12
+            pBtn.AutoButtonColor = false
+            Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
+            
+            pBtn.MouseButton1Click:Connect(function()
+                pcall(function()
+                    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                    end
+                end)
+            end)
+        end
+    end
+end
+
+local RefreshBtn = Instance.new("TextButton", TpPage)
+RefreshBtn.Size = UDim2.new(1, 0, 0, 36)
+RefreshBtn.BackgroundColor3 = Theme.Accent
+RefreshBtn.Text = "🔄 Atualizar Lista de Jogadores"
+RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshBtn.Font = Enum.Font.GothamBold
+RefreshBtn.TextSize = 12
+RefreshBtn.AutoButtonColor = false
+Instance.new("UICorner", RefreshBtn).CornerRadius = UDim.new(0, 6)
+RefreshBtn.MouseButton1Click:Connect(refreshPlayerList)
+
+task.spawn(function()
+    while true do
+        refreshPlayerList()
+        task.wait(5)
     end
 end)
