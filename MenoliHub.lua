@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V55 - Clean Raw Script
+-- Menoli Hub V56 (Funções Ativas)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -26,6 +26,9 @@ local Theme = {
     SliderBg = Color3.fromRGB(30, 25, 40)
 }
 
+-- ==========================================
+-- UI BASE
+-- ==========================================
 local MainFrame = Instance.new("Frame", CORE_GUI)
 MainFrame.Size = UDim2.new(0, 480, 0, 300)
 MainFrame.Position = UDim2.new(0.5, -240, 0.5, -150)
@@ -44,12 +47,13 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V55 - HUB"
+Title.Text = "MENOLI V56 - HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
+-- Botão Minimizar
 local MinBtn = Instance.new("TextButton", TopBar)
 MinBtn.Size = UDim2.new(0, 30, 0, 30)
 MinBtn.Position = UDim2.new(1, -65, 0, 2)
@@ -59,6 +63,7 @@ MinBtn.TextColor3 = Theme.Text
 MinBtn.Font = Enum.Font.GothamBold
 MinBtn.TextSize = 18
 
+-- Botão Fechar
 local CloseBtn = Instance.new("TextButton", TopBar)
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -35, 0, 2)
@@ -69,6 +74,7 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 14
 CloseBtn.MouseButton1Click:Connect(function() CORE_GUI:Destroy() end)
 
+-- Arrastar Janela
 local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -77,20 +83,19 @@ TopBar.InputBegan:Connect(function(input)
         startPos = MainFrame.Position
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
         local delta = input.Position - dragStart
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
     end
 end)
 
+-- Botão Flutuante (Bolinha)
 local FloatBtn = Instance.new("TextButton", CORE_GUI)
 FloatBtn.Size = UDim2.new(0, 45, 0, 45)
 FloatBtn.Position = UDim2.new(0.1, 0, 0.2, 0)
@@ -122,6 +127,7 @@ FloatBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserI
 MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false FloatBtn.Visible = true end)
 FloatBtn.MouseButton1Click:Connect(function() if not floatMoved then MainFrame.Visible = true FloatBtn.Visible = false end end)
 
+-- Tabs
 local TabBar = Instance.new("ScrollingFrame", MainFrame)
 TabBar.Size = UDim2.new(1, -16, 0, 30)
 TabBar.Position = UDim2.new(0, 8, 0, 42)
@@ -147,7 +153,7 @@ local function createPage(name)
     page.ScrollBarThickness = 2
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
     page.Visible = false
-    
+
     local l = Instance.new("UIListLayout", page)
     l.Padding = UDim.new(0, 5)
     l.SortOrder = Enum.SortOrder.LayoutOrder
@@ -170,7 +176,7 @@ local function addTab(name, page)
     btn.TextSize = 11
     btn.AutoButtonColor = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    
+
     btn.MouseButton1Click:Connect(function()
         for _, p in ipairs(PageContainer:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
         for _, b in ipairs(TabBar:GetChildren()) do if b:IsA("TextButton") then b.BackgroundColor3 = Theme.Box end end
@@ -189,6 +195,7 @@ addTab("Teleporte", TpP)
 CombatP.Visible = true
 TabBar:GetChildren()[1].BackgroundColor3 = Theme.Accent
 
+-- Helpers
 local function addToggle(parent, text, callback)
     local c = Instance.new("Frame", parent)
     c.Size = UDim2.new(1, 0, 0, 32)
@@ -272,6 +279,11 @@ local function addSlider(parent, text, min, max, def, callback)
     UserInputService.InputChanged:Connect(function(input) if draggingS and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then update(input) end end)
 end
 
+-- ==========================================
+-- FUNÇÕES ATIVAS
+-- ==========================================
+
+-- HITKILL
 local hitkill = false
 addToggle(CombatP, "Ativar Hitkill em Mobs", function(v) hitkill = v end)
 task.spawn(function()
@@ -298,6 +310,7 @@ task.spawn(function()
     end
 end)
 
+-- NOCLIP
 local noclip = false
 addToggle(CombatP, "Ativar NoClip", function(v) noclip = v end)
 RunService.Stepped:Connect(function()
@@ -310,6 +323,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
+-- SPEED
 local speedOn = false
 local speedVal = 16
 addToggle(MoveP, "Ativar Speed Hack", function(v) speedOn = v end)
@@ -320,6 +334,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- FLY
 local flyOn = false
 local flySpeed = 50
 local bg, bv
@@ -351,6 +366,7 @@ addToggle(MoveP, "Ativar Fly (Voo)", function(v)
 end)
 addSlider(MoveP, "Velocidade do Voo", 10, 200, 50, function(v) flySpeed = v end)
 
+-- VISUAL
 addToggle(VisualP, "Ativar FPS Boost", function(v)
     pcall(function()
         for _, obj in ipairs(workspace:GetDescendants()) do
@@ -367,6 +383,7 @@ addToggle(VisualP, "Remover Nevoeiro (Fog)", function(v)
     end)
 end)
 
+-- AUTO HATCH
 local autoHatch = false
 addToggle(EggP, "Ativar Auto Hatch (Automático)", function(v)
     autoHatch = v
@@ -387,6 +404,7 @@ addToggle(EggP, "Ativar Auto Hatch (Automático)", function(v)
     end)
 end)
 
+-- TELEPORTE
 local function refreshTp()
     for _, child in ipairs(TpP:GetChildren()) do if child:IsA("TextButton") and child.Name ~= "Ref" then child:Destroy() end end
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -412,7 +430,7 @@ local refBtn = Instance.new("TextButton", TpP)
 refBtn.Name = "Ref"
 refBtn.Size = UDim2.new(1, 0, 0, 32)
 refBtn.BackgroundColor3 = Theme.Accent
-refBtn.Text = "🔄 Atualizar Lista de Jogadores"
+refBtn.Text = "Atualizar Lista de Jogadores"
 refBtn.TextColor3 = Color3.fromRGB(255,255,255)
 refBtn.Font = Enum.Font.GothamBold
 refBtn.TextSize = 11
