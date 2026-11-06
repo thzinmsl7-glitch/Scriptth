@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V54 - Final Fix & Verified Code
+-- Menoli Hub V55 - Clean Raw Script
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -26,7 +26,6 @@ local Theme = {
     SliderBg = Color3.fromRGB(30, 25, 40)
 }
 
--- Janela Principal
 local MainFrame = Instance.new("Frame", CORE_GUI)
 MainFrame.Size = UDim2.new(0, 480, 0, 300)
 MainFrame.Position = UDim2.new(0.5, -240, 0.5, -150)
@@ -45,7 +44,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V54 - HUB"
+Title.Text = "MENOLI V55 - HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
@@ -70,7 +69,6 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 14
 CloseBtn.MouseButton1Click:Connect(function() CORE_GUI:Destroy() end)
 
--- Sistema de Arrastar
 local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -93,7 +91,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Botão Flutuante
 local FloatBtn = Instance.new("TextButton", CORE_GUI)
 FloatBtn.Size = UDim2.new(0, 45, 0, 45)
 FloatBtn.Position = UDim2.new(0.1, 0, 0.2, 0)
@@ -125,7 +122,6 @@ FloatBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserI
 MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false FloatBtn.Visible = true end)
 FloatBtn.MouseButton1Click:Connect(function() if not floatMoved then MainFrame.Visible = true FloatBtn.Visible = false end end)
 
--- Abas
 local TabBar = Instance.new("ScrollingFrame", MainFrame)
 TabBar.Size = UDim2.new(1, -16, 0, 30)
 TabBar.Position = UDim2.new(0, 8, 0, 42)
@@ -193,7 +189,6 @@ addTab("Teleporte", TpP)
 CombatP.Visible = true
 TabBar:GetChildren()[1].BackgroundColor3 = Theme.Accent
 
--- Componentes
 local function addToggle(parent, text, callback)
     local c = Instance.new("Frame", parent)
     c.Size = UDim2.new(1, 0, 0, 32)
@@ -277,11 +272,6 @@ local function addSlider(parent, text, min, max, def, callback)
     UserInputService.InputChanged:Connect(function(input) if draggingS and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then update(input) end end)
 end
 
--- ==========================================
--- FUNÇÕES DO HUB
--- ==========================================
-
--- Combate
 local hitkill = false
 addToggle(CombatP, "Ativar Hitkill em Mobs", function(v) hitkill = v end)
 task.spawn(function()
@@ -320,7 +310,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Movimento
 local speedOn = false
 local speedVal = 16
 addToggle(MoveP, "Ativar Speed Hack", function(v) speedOn = v end)
@@ -362,7 +351,6 @@ addToggle(MoveP, "Ativar Fly (Voo)", function(v)
 end)
 addSlider(MoveP, "Velocidade do Voo", 10, 200, 50, function(v) flySpeed = v end)
 
--- Visual
 addToggle(VisualP, "Ativar FPS Boost", function(v)
     pcall(function()
         for _, obj in ipairs(workspace:GetDescendants()) do
@@ -379,7 +367,6 @@ addToggle(VisualP, "Remover Nevoeiro (Fog)", function(v)
     end)
 end)
 
--- Auto Ovos
 local autoHatch = false
 addToggle(EggP, "Ativar Auto Hatch (Automático)", function(v)
     autoHatch = v
@@ -400,7 +387,6 @@ addToggle(EggP, "Ativar Auto Hatch (Automático)", function(v)
     end)
 end)
 
--- Teleporte
 local function refreshTp()
     for _, child in ipairs(TpP:GetChildren()) do if child:IsA("TextButton") and child.Name ~= "Ref" then child:Destroy() end end
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -408,7 +394,7 @@ local function refreshTp()
             local pBtn = Instance.new("TextButton", TpP)
             pBtn.Size = UDim2.new(1, 0, 0, 32)
             pBtn.BackgroundColor3 = Theme.Box
-            pBtn.Text = "Ir até: " .. plr.Name -- Corrigido para concatenar com '..'
+            pBtn.Text = "Ir até: " .. plr.Name
             pBtn.TextColor3 = Theme.Text
             pBtn.Font = Enum.Font.GothamMedium
             pBtn.TextSize = 11
@@ -426,11 +412,10 @@ local refBtn = Instance.new("TextButton", TpP)
 refBtn.Name = "Ref"
 refBtn.Size = UDim2.new(1, 0, 0, 32)
 refBtn.BackgroundColor3 = Theme.Accent
-refBtn.Text = "🔄 Atualizar Lista de Jogadores" -- Corrigido para concatenar com '..' se houver variáveis
+refBtn.Text = "🔄 Atualizar Lista de Jogadores"
 refBtn.TextColor3 = Color3.fromRGB(255,255,255)
 refBtn.Font = Enum.Font.GothamBold
 refBtn.TextSize = 11
 Instance.new("UICorner", refBtn).CornerRadius = UDim.new(0, 6)
-refBtn.MouseButton1Context = nil -- Limpeza segura
 refBtn.MouseButton1Click:Connect(refreshTp)
 refreshTp()
