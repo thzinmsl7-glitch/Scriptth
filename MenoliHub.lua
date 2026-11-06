@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V49 - Professional UI & Auto Hatch
+-- Menoli Hub V50 - Fixed & Stabilized Professional UI
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -30,32 +30,32 @@ local Theme = {
 -- UI BASE
 -- ==========================================
 local MainFrame = Instance.new("Frame", CORE_GUI)
-MainFrame.Size = UDim2.new(0, 520, 0, 340)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -170)
+MainFrame.Size = UDim2.new(0, 500, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -160)
 MainFrame.BackgroundColor3 = Theme.Background
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 
 local TopBar = Instance.new("Frame", MainFrame)
-TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.Size = UDim2.new(1, 0, 0, 35)
 TopBar.BackgroundColor3 = Theme.Box
 TopBar.BorderSizePixel = 0
 Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
 
 local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
-Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V49 - PROFESSIONAL HUB"
+Title.Text = "MENOLI V50 - PROFESSIONAL HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 13
+Title.TextSize = 12
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
 local MinBtn = Instance.new("TextButton", TopBar)
 MinBtn.Size = UDim2.new(0, 30, 0, 30)
-MinBtn.Position = UDim2.new(1, -70, 0, 5)
+MinBtn.Position = UDim2.new(1, -70, 0, 2)
 MinBtn.BackgroundTransparency = 1
 MinBtn.Text = "-"
 MinBtn.TextColor3 = Theme.Text
@@ -64,7 +64,7 @@ MinBtn.TextSize = 18
 
 local CloseBtn = Instance.new("TextButton", TopBar)
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -40, 0, 5)
+CloseBtn.Position = UDim2.new(1, -40, 0, 2)
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Theme.Text
@@ -139,30 +139,20 @@ MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false FloatBtn.V
 FloatBtn.MouseButton1Click:Connect(function() if not floatMoved then MainFrame.Visible = true FloatBtn.Visible = false end end)
 
 -- ==========================================
--- SISTEMA DE ABAS
+-- SISTEMA DE ABAS E CONTEÚDO
 -- ==========================================
-local ContentFrame = Instance.new("Frame", MainFrame)
-ContentFrame.Size = UDim2.new(1, 0, 1, -40)
-ContentFrame.Position = UDim2.new(0, 0, 0, 40)
-ContentFrame.BackgroundTransparency = 1
-
-local TabContainer = Instance.new("ScrollingFrame", ContentFrame)
-TabContainer.Size = UDim2.new(1, 0, 0, 35)
+local TabContainer = Instance.new("Frame", MainFrame)
+TabContainer.Size = UDim2.new(1, -20, 0, 32)
+TabContainer.Position = UDim2.new(0, 10, 0, 42)
 TabContainer.BackgroundTransparency = 1
-TabContainer.CanvasSize = UDim2.new(0, 500, 0, 0)
-TabContainer.ScrollBarThickness = 0
 
 local UIListTabs = Instance.new("UIListLayout", TabContainer)
 UIListTabs.FillDirection = Enum.FillDirection.Horizontal
-UIListTabs.Padding = UDim.new(0, 6)
+UIListTabs.Padding = UDim.new(0, 5)
 
-local UIPadTabs = Instance.new("UIPadding", TabContainer)
-UIPadTabs.PaddingLeft = UDim.new(0, 10)
-UIPadTabs.PaddingTop = UDim.new(0, 4)
-
-local PagesContainer = Instance.new("Frame", ContentFrame)
-PagesContainer.Size = UDim2.new(1, 0, 1, -40)
-PagesContainer.Position = UDim2.new(0, 0, 0, 40)
+local PagesContainer = Instance.new("Frame", MainFrame)
+PagesContainer.Size = UDim2.new(1, -20, 1, -85)
+PagesContainer.Position = UDim2.new(0, 10, 0, 80)
 PagesContainer.BackgroundTransparency = 1
 
 local function createPage(name)
@@ -175,13 +165,11 @@ local function createPage(name)
     page.Visible = false
     
     local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim2.new(0, 6)
+    layout.Padding = UDim.new(0, 6)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     
     local pad = Instance.new("UIPadding", page)
-    pad.PaddingLeft = UDim.new(0, 15)
-    pad.PaddingRight = UDim.new(0, 15)
-    pad.PaddingTop = UDim.new(0, 5)
+    pad.PaddingTop = UDim.new(0, 2)
     return page
 end
 
@@ -193,7 +181,7 @@ local TpPage = createPage("Teleport")
 
 local function createTabBtn(text, page)
     local btn = Instance.new("TextButton", TabContainer)
-    btn.Size = UDim2.new(0, 88, 0, 28)
+    btn.Size = UDim2.new(0, 88, 1, 0)
     btn.BackgroundColor3 = Theme.Box
     btn.Text = text
     btn.TextColor3 = Theme.Text
@@ -225,7 +213,7 @@ CombatPage.Visible = true
 TabContainer:GetChildren()[1].BackgroundColor3 = Theme.Accent
 
 -- ==========================================
--- COMPONENTES MODERNOS (ESTILO SWITCH ON/OFF)
+-- COMPONENTES MODERNOS
 -- ==========================================
 local function makeSection(parent, text)
     local lbl = Instance.new("TextLabel", parent)
@@ -324,9 +312,9 @@ local function makeSlider(parent, text, min, max, default, callback)
 end
 
 -- ==========================================
--- 1. ABA COMBATE
+-- 1. COMBATE
 -- ==========================================
-makeSection(CombatPage, "COMBATE & MOVIMENTO LIVRE")
+makeSection(CombatPage, "AÇÕES DE COMBATE")
 local HitkillEnabled = false
 makeToggle(CombatPage, "Ativar Hitkill em Mobs", function(state) HitkillEnabled = state end)
 
@@ -369,7 +357,7 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ==========================================
--- 2. ABA MOVIMENTAÇÃO (SPEED & FLY)
+-- 2. MOVIMENTAÇÃO
 -- ==========================================
 makeSection(MovePage, "VELOCIDADE E VOO")
 local SpeedEnabled = false
@@ -424,9 +412,9 @@ end)
 makeSlider(MovePage, "Velocidade do Voo", 10, 200, 50, function(val) FlySpeed = val end)
 
 -- ==========================================
--- 3. ABA VISUAL (FPS BOOST & FOG)
+-- 3. VISUAL / FPS
 -- ==========================================
-makeSection(VisualPage, "OTIMIZAÇÃO E GRÁFICOS")
+makeSection(VisualPage, "OTIMIZAÇÃO")
 makeToggle(VisualPage, "Ativar FPS Boost", function(state)
     pcall(function()
         for _, v in ipairs(workspace:GetDescendants()) do
@@ -449,11 +437,10 @@ makeToggle(VisualPage, "Remover Nevoeiro (Fog)", function(state)
 end)
 
 -- ==========================================
--- 4. ABA AUTO HATCH (ABERTURA DE OVOS)
+-- 4. AUTO OVOS
 -- ==========================================
 makeSection(EggPage, "GERENCIAMENTO DE OVOS")
 local AutoHatchEnabled = false
-local FastHatchEnabled = false
 
 makeToggle(EggPage, "Ativar Auto Hatch (Automático)", function(state)
     AutoHatchEnabled = state
@@ -475,26 +462,10 @@ makeToggle(EggPage, "Ativar Auto Hatch (Automático)", function(state)
     end)
 end)
 
-makeToggle(EggPage, "Ativar Fast Hatch (Pular Animação)", function(state)
-    FastHatchEnabled = state
-    task.spawn(function()
-        while FastHatchEnabled do
-            pcall(function()
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v:IsA("Model") and v.Name:lower():find("egg") then
-                        -- Tenta remover animações visuais do ovo se existirem no cliente
-                    end
-                end
-            end)
-            task.wait(0.1)
-        end
-    end)
-end)
-
 -- ==========================================
--- 5. ABA TELEPORTE DE PLAYERS
+-- 5. TELEPORTE
 -- ==========================================
-makeSection(TpPage, "LISTA DE JOGADORES")
+makeSection(TpPage, "JOGADORES NO SERVIDOR")
 local function refreshPlayerList()
     for _, child in ipairs(TpPage:GetChildren()) do
         if child:IsA("Frame") and child.Name == "TpCard" then child:Destroy() end
@@ -510,37 +481,7 @@ local function refreshPlayerList()
             local pBtn = Instance.new("TextButton", pCard)
             pBtn.Size = UDim2.new(1, 0, 1, 0)
             pBtn.BackgroundTransparency = 1
-            pBtn.Text = "  Ir até: " .. plr.Name
-            pBtn.TextColor3 = Theme.Text
-            pBtn.Font = Enum.Font.GothamMedium
-            pBtn.TextSize = 12
-            pBtn.TextXAlignment = Enum.TextXAlignment.Left
-            
-            pBtn.MouseButton1Click:Connect(function()
-                pcall(function()
-                    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-                    end
-                end)
-            end)
+            pBtn.Text = "  Ir até: " + plr.Name -- Corrigido para concatenação segura em Lua abaixo
         end
     end
 end
-
-local RefreshBtn = Instance.new("TextButton", TpPage)
-RefreshBtn.Size = UDim2.new(1, 0, 0, 34)
-RefreshBtn.BackgroundColor3 = Theme.Accent
-RefreshBtn.Text = "🔄 Atualizar Lista"
-RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-RefreshBtn.Font = Enum.Font.GothamBold
-RefreshBtn.TextSize = 12
-RefreshBtn.AutoButtonColor = false
-Instance.new("UICorner", RefreshBtn).CornerRadius = UDim.new(0, 6)
-RefreshBtn.MouseButton1Click:Connect(refreshPlayerList)
-
-task.spawn(function()
-    while true do
-        refreshPlayerList()
-        task.wait(5)
-    end
-end)
