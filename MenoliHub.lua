@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V56 - Safe Clean UI
+-- Menoli Hub V55 - Clean Raw Script
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -44,7 +44,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V56 - HUB"
+Title.Text = "MENOLI V55 - HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
@@ -412,7 +412,7 @@ local refBtn = Instance.new("TextButton", TpP)
 refBtn.Name = "Ref"
 refBtn.Size = UDim2.new(1, 0, 0, 32)
 refBtn.BackgroundColor3 = Theme.Accent
-refBtn.Text = "Atualizar Lista de Jogadores"
+refBtn.Text = "🔄 Atualizar Lista de Jogadores"
 refBtn.TextColor3 = Color3.fromRGB(255,255,255)
 refBtn.Font = Enum.Font.GothamBold
 refBtn.TextSize = 11
