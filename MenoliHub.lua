@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V56 (Funções Ativas)
+-- Corrigido o Scroll e variáveis de estado.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -47,7 +47,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V56 - HUB"
+Title.Text = "MENOLI V57 - HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
@@ -74,7 +74,7 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 14
 CloseBtn.MouseButton1Click:Connect(function() CORE_GUI:Destroy() end)
 
--- Arrastar Janela
+-- Arrastar
 local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -95,7 +95,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Botão Flutuante (Bolinha)
+-- Botão Flutuante
 local FloatBtn = Instance.new("TextButton", CORE_GUI)
 FloatBtn.Size = UDim2.new(0, 45, 0, 45)
 FloatBtn.Position = UDim2.new(0.1, 0, 0.2, 0)
@@ -134,6 +134,7 @@ TabBar.Position = UDim2.new(0, 8, 0, 42)
 TabBar.BackgroundTransparency = 1
 TabBar.CanvasSize = UDim2.new(0, 450, 0, 0)
 TabBar.ScrollBarThickness = 0
+TabBar.ScrollingDirection = Enum.ScrollingDirection.X
 
 local TabList = Instance.new("UIListLayout", TabBar)
 TabList.FillDirection = Enum.FillDirection.Horizontal
@@ -151,7 +152,7 @@ local function createPage(name)
     page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
     page.ScrollBarThickness = 2
-    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.CanvasSize = UDim2.new(0, 0, 0, 0) -- Força o tamanho a ser recalculado
     page.Visible = false
 
     local l = Instance.new("UIListLayout", page)
@@ -233,6 +234,7 @@ local function addToggle(parent, text, callback)
         circle:TweenPosition(state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
         if callback then callback(state) end
     end)
+    parent.CanvasSize = UDim2.new(0, 0, 0, #parent:GetChildren() * 37)
 end
 
 local function addSlider(parent, text, min, max, def, callback)
@@ -277,131 +279,34 @@ local function addSlider(parent, text, min, max, def, callback)
     sBtn.MouseButton1Down:Connect(function() draggingS = true update({Position = UserInputService:GetMouseLocation()}) end)
     UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then draggingS = false end end)
     UserInputService.InputChanged:Connect(function(input) if draggingS and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then update(input) end end)
+    parent.CanvasSize = UDim2.new(0, 0, 0, #parent:GetChildren() * 47)
 end
 
 -- ==========================================
--- FUNÇÕES ATIVAS
+-- FUNÇÕES (CORRIGIDAS)
 -- ==========================================
-
--- HITKILL
 local hitkill = false
 addToggle(CombatP, "Ativar Hitkill em Mobs", function(v) hitkill = v end)
-task.spawn(function()
-    while true do
-        if hitkill and LocalPlayer.Character then
-            pcall(function()
-                local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if root then
-                    for _, obj in ipairs(workspace:GetDescendants()) do
-                        if obj:IsA("Model") and obj ~= LocalPlayer.Character then
-                            local hum = obj:FindFirstChildOfClass("Humanoid")
-                            local part = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
-                            if hum and part and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
-                                if (part.Position - root.Position).Magnitude < 35 then
-                                    hum.Health = 0
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-        task.wait(0.1)
-    end
-end)
 
--- NOCLIP
 local noclip = false
 addToggle(CombatP, "Ativar NoClip", function(v) noclip = v end)
-RunService.Stepped:Connect(function()
-    if noclip and LocalPlayer.Character then
-        pcall(function()
-            for _, p in ipairs(LocalPlayer.Character:GetDescendants()) do
-                if p:IsA("BasePart") and p.CanCollide then p.CanCollide = false end
-            end
-        end)
-    end
-end)
 
--- SPEED
 local speedOn = false
 local speedVal = 16
 addToggle(MoveP, "Ativar Speed Hack", function(v) speedOn = v end)
 addSlider(MoveP, "WalkSpeed", 16, 250, 16, function(v) speedVal = v end)
-RunService.Heartbeat:Connect(function()
-    if speedOn and LocalPlayer.Character then
-        pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed = speedVal end)
-    end
-end)
 
--- FLY
 local flyOn = false
 local flySpeed = 50
-local bg, bv
-addToggle(MoveP, "Ativar Fly (Voo)", function(v)
-    flyOn = v
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    if flyOn then
-        bg = Instance.new("BodyGyro", root) bg.P = 9e4 bg.maxTorque = Vector3.new(9e9,9e9,9e9) bg.cframe = root.CFrame
-        bv = Instance.new("BodyVelocity", root) bv.velocity = Vector3.new(0,0.1,0) bv.maxForce = Vector3.new(9e9,9e9,9e9)
-        task.spawn(function()
-            while flyOn and LocalPlayer.Character and root do
-                local cam = workspace.CurrentCamera
-                local dir = Vector3.new()
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CoordinateFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CoordinateFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CoordinateFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CoordinateFrame.RightVector end
-                bv.velocity = dir * flySpeed
-                bg.cframe = cam.CoordinateFrame
-                RunService.RenderStepped:Wait()
-            end
-            if bg then bg:Destroy() end if bv then bv:Destroy() end
-        end)
-    else
-        if bg then bg:Destroy() end if bv then bv:Destroy() end
-    end
-end)
+addToggle(MoveP, "Ativar Fly (Voo)", function(v) flyOn = v end)
 addSlider(MoveP, "Velocidade do Voo", 10, 200, 50, function(v) flySpeed = v end)
 
--- VISUAL
-addToggle(VisualP, "Ativar FPS Boost", function(v)
-    pcall(function()
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then obj.Material = v and Enum.Material.SmoothPlastic or obj.Material obj.Reflectance = v and 0 or obj.Reflectance
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then obj.Transparency = v and 1 or 0 end
-        end
-    end)
-end)
-
-addToggle(VisualP, "Remover Nevoeiro (Fog)", function(v)
-    pcall(function()
-        Lighting.FogEnd = v and 999999 or 1000
-        Lighting.GlobalShadows = not v
-    end)
-end)
-
--- AUTO HATCH
 local autoHatch = false
-addToggle(EggP, "Ativar Auto Hatch (Automático)", function(v)
-    autoHatch = v
-    task.spawn(function()
-        while autoHatch do
-            pcall(function()
-                for _, r in ipairs(ReplicatedStorage:GetDescendants()) do
-                    if (r:IsA("RemoteEvent") or r:IsA("RemoteFunction")) then
-                        local n = r.Name:lower()
-                        if n:find("egg") or n:find("hatch") or n:find("open") then
-                            r:FireServer("1") r:InvokeServer("1")
-                        end
-                    end
-                end
-            end)
-            task.wait(0.5)
-        end
-    end)
+addToggle(EggP, "Ativar Auto Hatch (Automático)", function(v) autoHatch = v end)
+
+-- VISUAL (Mantido Simples)
+addToggle(VisualP, "Ativar FPS Boost", function(v)
+    pcall(function() settings().Rendering.QualityLevel = v and Enum.QualityLevel.Level01 or Enum.QualityLevel.Automatic end)
 end)
 
 -- TELEPORTE
@@ -418,14 +323,12 @@ local function refreshTp()
             pBtn.TextSize = 11
             Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
             pBtn.MouseButton1Click:Connect(function()
-                pcall(function()
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-                end)
+                pcall(function() LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0) end)
             end)
         end
     end
+    TpP.CanvasSize = UDim2.new(0, 0, 0, #TpP:GetChildren() * 37)
 end
-
 local refBtn = Instance.new("TextButton", TpP)
 refBtn.Name = "Ref"
 refBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -437,3 +340,87 @@ refBtn.TextSize = 11
 Instance.new("UICorner", refBtn).CornerRadius = UDim.new(0, 6)
 refBtn.MouseButton1Click:Connect(refreshTp)
 refreshTp()
+
+-- ==========================================
+-- LOOPS (EXECUÇÃO)
+-- ==========================================
+task.spawn(function()
+    while true do
+        if hitkill and LocalPlayer.Character then
+            local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and obj ~= LocalPlayer.Character then
+                        local hum = obj:FindFirstChildOfClass("Humanoid")
+                        local part = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
+                        if hum and part and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
+                            if (part.Position - root.Position).Magnitude < 35 then
+                                pcall(function() hum.Health = 0 end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if noclip and LocalPlayer.Character then
+        for _, p in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if p:IsA("BasePart") and p.CanCollide then p.CanCollide = false end
+        end
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        if speedOn then LocalPlayer.Character.Humanoid.WalkSpeed = speedVal end
+    end
+end)
+
+-- FLY LOOP
+local bg, bv
+task.spawn(function()
+    while true do
+        if flyOn and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local root = LocalPlayer.Character.HumanoidRootPart
+            if not bg then
+                bg = Instance.new("BodyGyro", root) bg.P = 9e4 bg.maxTorque = Vector3.new(9e9,9e9,9e9)
+                bv = Instance.new("BodyVelocity", root) bv.velocity = Vector3.new(0,0,0) bv.maxForce = Vector3.new(9e9,9e9,9e9)
+            end
+            local cam = workspace.CurrentCamera
+            local dir = Vector3.new()
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CoordinateFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CoordinateFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CoordinateFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CoordinateFrame.RightVector end
+            bv.velocity = dir * flySpeed
+            bg.cframe = cam.CoordinateFrame
+        else
+            if bg then bg:Destroy() bg = nil end
+            if bv then bv:Destroy() bv = nil end
+        end
+        task.wait()
+    end
+end)
+
+-- AUTO HATCH LOOP
+task.spawn(function()
+    while true do
+        if autoHatch then
+            pcall(function()
+                for _, r in ipairs(ReplicatedStorage:GetDescendants()) do
+                    if (r:IsA("RemoteEvent") or r:IsA("RemoteFunction")) then
+                        local n = r.Name:lower()
+                        if n:find("egg") or n:find("hatch") or n:find("open") then
+                            r:FireServer("1") r:InvokeServer("1")
+                        end
+                    end
+                end
+            end)
+        end
+        task.wait(0.5)
+    end
+end)
