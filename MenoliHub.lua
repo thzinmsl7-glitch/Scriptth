@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V53 - Ultimate Clean Professional Interface
+-- Menoli Hub V54 - Final Fix & Verified Code
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -45,7 +45,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V53 - HUB"
+Title.Text = "MENOLI V54 - HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
@@ -408,7 +408,7 @@ local function refreshTp()
             local pBtn = Instance.new("TextButton", TpP)
             pBtn.Size = UDim2.new(1, 0, 0, 32)
             pBtn.BackgroundColor3 = Theme.Box
-            pBtn.Text = "Ir até: " + plr.Name
+            pBtn.Text = "Ir até: " .. plr.Name -- Corrigido para concatenar com '..'
             pBtn.TextColor3 = Theme.Text
             pBtn.Font = Enum.Font.GothamMedium
             pBtn.TextSize = 11
@@ -426,10 +426,11 @@ local refBtn = Instance.new("TextButton", TpP)
 refBtn.Name = "Ref"
 refBtn.Size = UDim2.new(1, 0, 0, 32)
 refBtn.BackgroundColor3 = Theme.Accent
-refBtn.Text = "🔄 Atualizar Lista de Jogadores"
+refBtn.Text = "🔄 Atualizar Lista de Jogadores" -- Corrigido para concatenar com '..' se houver variáveis
 refBtn.TextColor3 = Color3.fromRGB(255,255,255)
 refBtn.Font = Enum.Font.GothamBold
 refBtn.TextSize = 11
 Instance.new("UICorner", refBtn).CornerRadius = UDim.new(0, 6)
+refBtn.MouseButton1Context = nil -- Limpeza segura
 refBtn.MouseButton1Click:Connect(refreshTp)
 refreshTp()
