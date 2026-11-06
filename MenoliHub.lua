@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V49 - Completo
+-- V51: UI Profissional com Customização de Cores.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -16,14 +16,14 @@ local CORE_GUI = Instance.new("ScreenGui", game:GetService("CoreGui"))
 CORE_GUI.Name = "Menoli_Flat"
 CORE_GUI.ResetOnSpawn = false
 
+-- Variáveis de Tema (Vão ser alteradas pela aba Config)
 local Theme = {
     Background = Color3.fromRGB(12, 10, 18),
-    Accent = Color3.fromRGB(150, 50, 255),
+    Accent = Color3.fromRGB(150, 50, 255), -- Cor Principal
     Text = Color3.fromRGB(230, 230, 240),
     Box = Color3.fromRGB(20, 15, 30),
     SliderBg = Color3.fromRGB(30, 25, 40),
     Success = Color3.fromRGB(45, 180, 90),
-    Danger = Color3.fromRGB(220, 50, 50)
 }
 
 -- ==========================================
@@ -47,7 +47,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V49 - ULTIMATE"
+Title.Text = "MENOLI V51 - PRO UI"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -135,8 +135,9 @@ ContentFrame.BackgroundTransparency = 1
 local TabContainer = Instance.new("ScrollingFrame", ContentFrame)
 TabContainer.Size = UDim2.new(1, 0, 0, 35)
 TabContainer.BackgroundTransparency = 1
-TabContainer.CanvasSize = UDim2.new(0, 450, 0, 0)
+TabContainer.CanvasSize = UDim2.new(0, 550, 0, 0)
 TabContainer.ScrollBarThickness = 0
+TabContainer.ScrollingDirection = Enum.ScrollingDirection.X
 
 local UIListTabs = Instance.new("UIListLayout", TabContainer)
 UIListTabs.FillDirection = Enum.FillDirection.Horizontal
@@ -176,6 +177,7 @@ local MovePage = createPage("Move")
 local VisualPage = createPage("Visual")
 local EggPage = createPage("Eggs")
 local TpPage = createPage("Teleport")
+local ConfigPage = createPage("Config")
 
 local function createTabBtn(text, page)
     local btn = Instance.new("TextButton", TabContainer)
@@ -206,6 +208,7 @@ local btn2 = createTabBtn("Movimento", MovePage)
 local btn3 = createTabBtn("Visual", VisualPage)
 local btn4 = createTabBtn("Ovos", EggPage)
 local btn5 = createTabBtn("Teleporte", TpPage)
+local btn6 = createTabBtn("⚙️ Config", ConfigPage)
 
 CombatPage.Visible = true
 btn1.BackgroundColor3 = Theme.Accent
@@ -303,7 +306,7 @@ end
 -- ==========================================
 -- ABA 1: COMBATE
 -- ==========================================
-makeLabel(CombatPage, "Automação")
+makeLabel(CombatPage, "Automação de Combate")
 local HitkillEnabled = false
 makeToggle(CombatPage, "Ativar Hitkill em Mobs", function(state) HitkillEnabled = state end)
 
@@ -332,6 +335,7 @@ task.spawn(function()
     end
 end)
 
+makeLabel(CombatPage, "Navegação Livre")
 local NoclipEnabled = false
 makeToggle(CombatPage, "Ativar NoClip", function(state) NoclipEnabled = state end)
 
@@ -348,14 +352,14 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ==========================================
--- ABA 2: MOVIMENTO (SPEED & FLY)
+-- ABA 2: MOVIMENTO
 -- ==========================================
 makeLabel(MovePage, "Velocidade")
 local SpeedEnabled = false
 local CurrentSpeed = 16
 
 makeToggle(MovePage, "Ativar Speed Hack", function(state) SpeedEnabled = state end)
-makeSlider(MovePage, "Velocidade (WalkSpeed)", 16, 250, 16, function(val) CurrentSpeed = val end)
+makeSlider(MovePage, "Velocidade WalkSpeed", 16, 250, 16, function(val) CurrentSpeed = val end)
 
 RunService.Heartbeat:Connect(function()
     if SpeedEnabled and LocalPlayer.Character then
@@ -408,17 +412,15 @@ end)
 makeSlider(MovePage, "Velocidade do Voo", 10, 200, 50, function(val) FlySpeed = val end)
 
 -- ==========================================
--- ABA 3: VISUAL
+-- ABA 3: VISUAL / FPS
 -- ==========================================
-makeLabel(VisualPage, "Desempenho")
+makeLabel(VisualPage, "Desempenho Gráfico")
 makeToggle(VisualPage, "Ativar FPS Boost", function(state)
     pcall(function()
         for _, v in ipairs(workspace:GetDescendants()) do
             if v:IsA("BasePart") then
                 if state then
-                    if v.Material ~= Enum.Material.SmoothPlastic then
-                        v.Material = Enum.Material.SmoothPlastic
-                    end
+                    if v.Material ~= Enum.Material.SmoothPlastic then v.Material = Enum.Material.SmoothPlastic end
                     v.Reflectance = 0
                 end
             elseif v:IsA("Decal") or v:IsA("Texture") then
@@ -438,11 +440,6 @@ makeToggle(VisualPage, "Remover Nevoeiro (Fog)", function(state)
         if state then
             Lighting.FogEnd = 999999
             Lighting.GlobalShadows = false
-            for _, v in ipairs(Lighting:GetChildren()) do
-                if v:IsA("Atmosphere") or v:IsA("Sky") then
-                    v.Parent = nil
-                end
-            end
         else
             Lighting.FogEnd = 1000
             Lighting.GlobalShadows = true
@@ -451,7 +448,7 @@ makeToggle(VisualPage, "Remover Nevoeiro (Fog)", function(state)
 end)
 
 -- ==========================================
--- ABA 4: AUTO OVOS (HATCH)
+-- ABA 4: AUTO OVOS
 -- ==========================================
 makeLabel(EggPage, "Automação de Ovos")
 local AutoHatchEnabled = false
@@ -461,7 +458,6 @@ task.spawn(function()
     while true do
         if AutoHatchEnabled then
             pcall(function()
-                -- Tenta achar o remote do Knit
                 local packages = ReplicatedStorage:FindFirstChild("Packages")
                 local index = packages and packages:FindFirstChild("_Index")
                 local knitPkg = index and index:FindFirstChild("sleitnick_knit@1.5.1")
@@ -487,9 +483,7 @@ makeLabel(TpPage, "Lista de Jogadores")
 
 local function refreshPlayerList()
     for _, child in ipairs(TpPage:GetChildren()) do
-        if child:IsA("TextButton") and child.Name == "PlayerTpBtn" then
-            child:Destroy()
-        end
+        if child:IsA("TextButton") and child.Name == "PlayerTpBtn" then child:Destroy() end
     end
     
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -533,3 +527,75 @@ task.spawn(function()
         task.wait(5)
     end
 end)
+
+-- ==========================================
+-- ABA 6: CONFIGURAÇÕES (MUDAR CORES)
+-- ==========================================
+makeLabel(ConfigPage, "Personalização do Painel")
+
+-- Função para atualizar todas as cores da UI
+local function updateTheme(newAccent, newBg)
+    if newAccent then
+        Theme.Accent = newAccent
+        Title.TextColor3 = Theme.Accent
+        MinBtn.TextColor3 = Theme.Accent
+        FloatBtn.BackgroundColor3 = Theme.Accent
+        btn1.BackgroundColor3 = Theme.Accent -- Aba ativa
+        
+        -- Atualiza os botões da aba
+        for _, b in ipairs(TabContainer:GetChildren()) do
+            if b:IsA("TextButton") and b.BackgroundColor3 == Color3.fromRGB(150, 50, 255) then
+                b.BackgroundColor3 = Theme.Accent
+            end
+        end
+    end
+    
+    if newBg then
+        Theme.Background = newBg
+        MainFrame.BackgroundColor3 = Theme.Background
+    end
+end
+
+-- Botão pra mudar pra Azul
+local btnBlue = Instance.new("TextButton", ConfigPage)
+btnBlue.Size = UDim2.new(1, 0, 0, 36)
+btnBlue.BackgroundColor3 = Color3.fromRGB(50, 100, 255)
+btnBlue.Text = "Tema Azul"
+btnBlue.TextColor3 = Theme.Text
+btnBlue.Font = Enum.Font.GothamBold
+btnBlue.TextSize = 12
+Instance.new("UICorner", btnBlue).CornerRadius = UDim.new(0, 6)
+btnBlue.MouseButton1Click:Connect(function() updateTheme(Color3.fromRGB(50, 100, 255), nil) end)
+
+-- Botão pra mudar pra Vermelho
+local btnRed = Instance.new("TextButton", ConfigPage)
+btnRed.Size = UDim2.new(1, 0, 0, 36)
+btnRed.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+btnRed.Text = "Tema Vermelho"
+btnRed.TextColor3 = Theme.Text
+btnRed.Font = Enum.Font.GothamBold
+btnRed.TextSize = 12
+Instance.new("UICorner", btnRed).CornerRadius = UDim.new(0, 6)
+btnRed.MouseButton1Click:Connect(function() updateTheme(Color3.fromRGB(200, 50, 50), nil) end)
+
+-- Botão pra mudar pra Verde
+local btnGreen = Instance.new("TextButton", ConfigPage)
+btnGreen.Size = UDim2.new(1, 0, 0, 36)
+btnGreen.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+btnGreen.Text = "Tema Verde"
+btnGreen.TextColor3 = Theme.Text
+btnGreen.Font = Enum.Font.GothamBold
+btnGreen.TextSize = 12
+Instance.new("UICorner", btnGreen).CornerRadius = UDim.new(0, 6)
+btnGreen.MouseButton1Click:Connect(function() updateTheme(Color3.fromRGB(50, 200, 100), nil) end)
+
+-- Botão pra voltar ao Original (Roxo)
+local btnPurple = Instance.new("TextButton", ConfigPage)
+btnPurple.Size = UDim2.new(1, 0, 0, 36)
+btnPurple.BackgroundColor3 = Color3.fromRGB(150, 50, 255)
+btnPurple.Text = "Tema Original (Roxo)"
+btnPurple.TextColor3 = Theme.Text
+btnPurple.Font = Enum.Font.GothamBold
+btnPurple.TextSize = 12
+Instance.new("UICorner", btnPurple).CornerRadius = UDim.new(0, 6)
+btnPurple.MouseButton1Click:Connect(function() updateTheme(Color3.fromRGB(150, 50, 255), nil) end)
