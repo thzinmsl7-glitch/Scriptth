@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- Menoli Hub V50 - Fixed & Stabilized Professional UI
+-- Menoli Hub V51 - Fixed ScrollingFrame & Professional UI
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -47,7 +47,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V50 - PROFESSIONAL HUB"
+Title.Text = "MENOLI V51 - PROFESSIONAL HUB"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 12
@@ -162,6 +162,7 @@ local function createPage(name)
     page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
     page.ScrollBarThickness = 2
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y -- CORREÇÃO CRUCIAL PARA APARECER OS ITENS!
     page.Visible = false
     
     local layout = Instance.new("UIListLayout", page)
@@ -481,7 +482,37 @@ local function refreshPlayerList()
             local pBtn = Instance.new("TextButton", pCard)
             pBtn.Size = UDim2.new(1, 0, 1, 0)
             pBtn.BackgroundTransparency = 1
-            pBtn.Text = "  Ir até: " + plr.Name -- Corrigido para concatenação segura em Lua abaixo
+            pBtn.Text = "  Ir até: " .. plr.Name
+            pBtn.TextColor3 = Theme.Text
+            pBtn.Font = Enum.Font.GothamMedium
+            pBtn.TextSize = 12
+            pBtn.TextXAlignment = Enum.TextXAlignment.Left
+            
+            pBtn.MouseButton1Click:Connect(function()
+                pcall(function()
+                    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                    end
+                end)
+            end)
         end
     end
 end
+
+local RefreshBtn = Instance.new("TextButton", TpPage)
+RefreshBtn.Size = UDim2.new(1, 0, 0, 34)
+RefreshBtn.BackgroundColor3 = Theme.Accent
+RefreshBtn.Text = "🔄 Atualizar Lista"
+RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshBtn.Font = Enum.Font.GothamBold
+RefreshBtn.TextSize = 12
+RefreshBtn.AutoButtonColor = false
+Instance.new("UICorner", RefreshBtn).CornerRadius = UDim.new(0, 6)
+RefreshBtn.MouseButton1Click:Connect(refreshPlayerList)
+
+task.spawn(function()
+    while true do
+        refreshPlayerList()
+        task.wait(5)
+    end
+end)
