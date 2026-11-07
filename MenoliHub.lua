@@ -410,7 +410,7 @@ task.spawn(function()
             end)
         end
         -- Delay mínimo pro celular não travar (0.05s = 20 tentativas por segundo)
-        task.wait(0.08) 
+        task.wait(0.05) 
     end
 end)
 
