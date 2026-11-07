@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- V52: Layout espaçado, FPS/Fog na Config, Tema Global e Hatch Rápido.
+-- V54: Layout com abas na esquerda e conteúdo na direita.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -29,8 +29,8 @@ local Theme = {
 -- UI BASE
 -- ==========================================
 local MainFrame = Instance.new("Frame", CORE_GUI)
-MainFrame.Size = UDim2.new(0, 500, 0, 380) -- Aumentei pra caber tudo com espaço
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -190)
+MainFrame.Size = UDim2.new(0, 500, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
 MainFrame.BackgroundColor3 = Theme.Background
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -46,7 +46,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V52 - PRO UI"
+Title.Text = "MENOLI V54 - SIDEBAR"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -118,63 +118,62 @@ FloatBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserI
 MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false FloatBtn.Visible = true end)
 FloatBtn.MouseButton1Click:Connect(function() if not floatMoved then MainFrame.Visible = true FloatBtn.Visible = false end end)
 
--- Sistema de Abas
+-- ==========================================
+-- LAYOUT LATERAL (SIDEBAR)
+-- ==========================================
 local ContentFrame = Instance.new("Frame", MainFrame)
 ContentFrame.Size = UDim2.new(1, 0, 1, -40)
 ContentFrame.Position = UDim2.new(0, 0, 0, 40)
 ContentFrame.BackgroundTransparency = 1
 
-local TabContainer = Instance.new("ScrollingFrame", ContentFrame)
-TabContainer.Size = UDim2.new(1, 0, 0, 35)
+-- Barra Lateral Esquerda (Abas)
+local TabContainer = Instance.new("Frame", ContentFrame)
+TabContainer.Size = UDim2.new(0, 120, 1, 0) -- 120 de largura
 TabContainer.BackgroundTransparency = 1
-TabContainer.CanvasSize = UDim2.new(0, 600, 0, 0)
-TabContainer.ScrollBarThickness = 0
-TabContainer.ScrollingDirection = Enum.ScrollingDirection.X
-
-local UIListTabs = Instance.new("UIListLayout", TabContainer)
-UIListTabs.FillDirection = Enum.FillDirection.Horizontal
-UIListTabs.Padding = UDim.new(0, 6)
 
 local UIPadTabs = Instance.new("UIPadding", TabContainer)
-UIPadTabs.PaddingLeft = UDim.new(0, 10)
-UIPadTabs.PaddingTop = UDim.new(0, 4)
+UIPadTabs.PaddingLeft = UDim.new(0, 8)
+UIPadTabs.PaddingTop = UDim.new(0, 10)
 
+local UIListTabs = Instance.new("UIListLayout", TabContainer)
+UIListTabs.FillDirection = Enum.FillDirection.Vertical -- Empilhado
+UIListTabs.Padding = UDim.new(0, 8)
+
+-- Área Direita (Conteúdo)
 local PagesContainer = Instance.new("Frame", ContentFrame)
-PagesContainer.Size = UDim2.new(1, 0, 1, -40)
-PagesContainer.Position = UDim2.new(0, 0, 0, 40)
+PagesContainer.Size = UDim2.new(1, -120, 1, 0) -- Preenche o resto
+PagesContainer.Position = UDim2.new(0, 120, 0, 0)
 PagesContainer.BackgroundTransparency = 1
 
 local function createPage(name)
     local page = Instance.new("ScrollingFrame", PagesContainer)
     page.Name = name
-    page.Size = UDim2.new(1, 0, 1, 0)
+    page.Size = UDim2.new(1, -10, 1, -10)
+    page.Position = UDim2.new(0, 5, 0, 5)
     page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
     page.ScrollBarThickness = 2
     page.Visible = false
     
-    -- Aumentei o espaçamento (Padding) aqui
     local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim.new(0, 12) 
+    layout.Padding = UDim.new(0, 10)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     
     local pad = Instance.new("UIPadding", page)
-    pad.PaddingLeft = UDim.new(0, 15)
-    pad.PaddingRight = UDim.new(0, 15)
-    pad.PaddingTop = UDim.new(0, 10)
+    pad.PaddingLeft = UDim.new(0, 10)
+    pad.PaddingTop = UDim.new(0, 5)
     return page
 end
 
 local CombatPage = createPage("Combat")
 local MovePage = createPage("Move")
-local VisualPage = createPage("Visual")
 local EggPage = createPage("Eggs")
 local TpPage = createPage("Teleport")
 local ConfigPage = createPage("Config")
 
 local function createTabBtn(text, page)
     local btn = Instance.new("TextButton", TabContainer)
-    btn.Size = UDim2.new(0, 80, 0, 28)
+    btn.Size = UDim2.new(1, 0, 0, 35) -- Botão ocupa a largura toda da sidebar
     btn.BackgroundColor3 = Theme.Box
     btn.Text = text
     btn.TextColor3 = Theme.Text
@@ -202,10 +201,9 @@ end
 
 local btn1 = createTabBtn("Combate", CombatPage)
 local btn2 = createTabBtn("Movimento", MovePage)
-local btn3 = createTabBtn("Visual", VisualPage)
-local btn4 = createTabBtn("Ovos", EggPage)
-local btn5 = createTabBtn("Teleporte", TpPage)
-local btn6 = createTabBtn("Config", ConfigPage)
+local btn3 = createTabBtn("Ovos", EggPage)
+local btn4 = createTabBtn("Teleporte", TpPage)
+local btn5 = createTabBtn("Config", ConfigPage)
 
 CombatPage.Visible = true
 btn1.BackgroundColor3 = Theme.Accent
@@ -306,7 +304,6 @@ task.spawn(function()
                             local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
                             if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
                                 if (root.Position - myRoot.Position).Magnitude < 30 then
-                                    hum:TakeDamage(hum.MaxHealth * 10)
                                     hum.Health = 0
                                 end
                             end
@@ -315,7 +312,7 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.05)
+        task.wait(0.1)
     end
 end)
 
@@ -392,23 +389,11 @@ end)
 makeSlider(MovePage, "Velocidade do Voo", 10, 200, 50, function(val) FlySpeed = val end)
 
 -- ==========================================
--- ABA 3: VISUAL (Limpa)
+-- ABA 3: OVOS
 -- ==========================================
-makeLabel(VisualPage, "Visual")
--- Deixei a aba visual só com espaço pra futuras atualizações, já que o FPS foi pra Config
-
--- ==========================================
--- ABA 4: AUTO OVOS (Rápido)
--- ==========================================
-makeLabel(EggPage, "Automação de Ovos")
+makeLabel(EggPage, "Automação")
 local AutoHatchEnabled = false
 makeToggle(EggPage, "Auto Hatch (Automático)", function(state) AutoHatchEnabled = state end)
-
--- Botão pra mudar a velocidade
-local HatchSpeed = 0.1
-makeSlider(EggPage, "Velocidade do Hatch", 1, 20, 10, function(val) 
-    HatchSpeed = 1 / val -- Inverte pra quanto maior o slider, menor o tempo
-end)
 
 task.spawn(function()
     while true do
@@ -417,7 +402,7 @@ task.spawn(function()
                 local packages = ReplicatedStorage:FindFirstChild("Packages")
                 local index = packages and packages:FindFirstChild("_Index")
                 local knitPkg = index and index:FindFirstChild("sleitnick_knit@1.5.1")
-                local knit = knitPkg and knitPkg:FindFirstChild("Knit")
+                local knit = knitPkg and knitPkg:FindFirstChild("knit")
                 local services = knit and knit:FindFirstChild("Services")
                 local eggService = services and services:FindFirstChild("EggHatchService")
                 local re = eggService and eggService:FindFirstChild("RE")
@@ -428,12 +413,12 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(HatchSpeed)
+        task.wait(0.15)
     end
 end)
 
 -- ==========================================
--- ABA 5: TELEPORTE
+-- ABA 4: TELEPORTE
 -- ==========================================
 makeLabel(TpPage, "Lista de Jogadores")
 
@@ -478,7 +463,7 @@ RefreshBtn.MouseButton1Click:Connect(refreshPlayerList)
 task.spawn(function() while true do refreshPlayerList() task.wait(5) end end)
 
 -- ==========================================
--- ABA 6: CONFIG (Temas e FPS movidos pra cá)
+-- ABA 5: CONFIG
 -- ==========================================
 makeLabel(ConfigPage, "Temas do Painel")
 
@@ -489,12 +474,10 @@ local function updateTheme(newAccent)
     FloatBtn.BackgroundColor3 = Theme.Accent
     btn1.BackgroundColor3 = Theme.Accent
     
-    -- Atualiza todas as barras de slider e botões ativos
     for _, p in ipairs(PagesContainer:GetChildren()) do
         if p:IsA("ScrollingFrame") then
             for _, obj in ipairs(p:GetDescendants()) do
                 if obj:IsA("Frame") and obj.Name == "Fill" then obj.BackgroundColor3 = Theme.Accent end
-                if obj:IsA("TextLabel") and obj.Text:find("Tema") then obj.TextColor3 = Theme.Accent end
             end
         end
     end
