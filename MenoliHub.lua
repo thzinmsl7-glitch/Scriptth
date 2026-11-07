@@ -1,9 +1,11 @@
 -- language: Lua, target: Roblox Delta Executor
--- Trava o personagem no topo do mapa pra ganhar o multiplicador máximo.
+-- V65: Base V62 com Hatch Turbo (sem delay).
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 if game:GetService("CoreGui"):FindFirstChild("Menoli_Flat") then
@@ -44,7 +46,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V60 - MAX HEIGHT MONEY"
+Title.Text = "MENOLI V65 - SIDEBAR"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -161,7 +163,8 @@ end
 
 local CombatPage = createPage("Combat")
 local MovePage = createPage("Move")
-local TpPage = createPage("Tp")
+local EggPage = createPage("Eggs")
+local TpPage = createPage("Teleport")
 local ConfigPage = createPage("Config")
 
 local function createTabBtn(text, page)
@@ -192,10 +195,14 @@ local function createTabBtn(text, page)
     return btn
 end
 
-createTabBtn("Combate", CombatPage)
-createTabBtn("Movimento", MovePage)
-createTabBtn("Teleporte", TpPage)
-createTabBtn("Config", ConfigPage)
+local btn1 = createTabBtn("Combate", CombatPage)
+local btn2 = createTabBtn("Movimento", MovePage)
+local btn3 = createTabBtn("Ovos", EggPage)
+local btn4 = createTabBtn("Teleporte", TpPage)
+local btn5 = createTabBtn("Config", ConfigPage)
+
+CombatPage.Visible = true
+btn1.BackgroundColor3 = Theme.Accent
 
 -- Componentes
 local function makeLabel(parent, text)
@@ -231,79 +238,7 @@ local function makeToggle(parent, text, callback)
     return btn
 end
 
--- ==========================================
--- ABA DE TELEPORTE (Max Height)
--- ==========================================
-makeLabel(TpPage, "Farm de Altura (Max)")
-
-local MaxHeightEnabled = false
-makeToggle(TpPage, "Ativar Farm Max Height", function(state) MaxHeightEnabled = state end)
-
--- Pega a coordenada exata do TOPO do mapa (a Part lá em cima)
-local topPosition = Vector3.new(-56.176, 11530, 855.6) -- Substitua pelas coordenadas do Topo (CFrame da Part)
-local bottomPosition = Vector3.new(-56.176, 11530 - 100, 855.6) -- Base do tapete (CFrame da Part2)
-
-task.spawn(function()
-    while true do
-        if MaxHeightEnabled and LocalPlayer.Character then
-            local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if myRoot then
-                -- 1. Cola no topo do mapa
-                myRoot.CFrame = CFrame.new(topPosition)
-                
-                -- 2. Dá um "pulinho" de 0.1 stud pra forçar o servidor a recalcular a altura
-                task.wait(0.1)
-                myRoot.CFrame = CFrame.new(topPosition + Vector3.new(0, 0.1, 0))
-                
-                -- 3. Volta pro topo pra garantir que não vai cair
-                task.wait(0.1)
-                myRoot.CFrame = CFrame.new(topPosition)
-            end
-        end
-        task.wait(0.2)
-    end
-end)
-
--- ==========================================
--- ABA DE COMBATE (Hitkill)
--- ==========================================
-makeLabel(CombatPage, "Combate")
-local HitkillEnabled = false
-makeToggle(CombatPage, "Hitkill em Mobs", function(state) HitkillEnabled = state end)
-
-task.spawn(function()
-    while true do
-        if HitkillEnabled and LocalPlayer.Character then
-            pcall(function()
-                local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if myRoot then
-                    for _, obj in ipairs(workspace:GetDescendants()) do
-                        if obj:IsA("Model") and obj ~= LocalPlayer.Character then
-                            local hum = obj:FindFirstChildOfClass("Humanoid")
-                            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
-                            if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
-                                if (root.Position - myRoot.Position).Magnitude < 30 then
-                                    hum.Health = 0
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-        task.wait(0.1)
-    end
-end)
-
--- ==========================================
--- ABA DE MOVIMENTO (Speed)
--- ==========================================
-makeLabel(MovePage, "Velocidade")
-local SpeedEnabled = false
-local CurrentSpeed = 16
-
-makeToggle(MovePage, "Speed Hack", function(state) SpeedEnabled = state end)
-makeSlider = function(parent, text, min, max, default, callback)
+local function makeSlider(parent, text, min, max, default, callback)
     local SliderFrame = Instance.new("Frame", parent)
     SliderFrame.Size = UDim2.new(1, 0, 0, 48)
     SliderFrame.BackgroundTransparency = 1
@@ -346,6 +281,58 @@ makeSlider = function(parent, text, min, max, default, callback)
     UserInputService.InputChanged:Connect(function(input) if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then updateValue(input) end end)
 end
 
+-- ==========================================
+-- ABA 1: COMBATE
+-- ==========================================
+makeLabel(CombatPage, "Combate")
+local HitkillEnabled = false
+makeToggle(CombatPage, "Hitkill em Mobs", function(state) HitkillEnabled = state end)
+
+task.spawn(function()
+    while true do
+        if HitkillEnabled and LocalPlayer.Character then
+            pcall(function()
+                local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myRoot then
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("Model") and obj ~= LocalPlayer.Character then
+                            local hum = obj:FindFirstChildOfClass("Humanoid")
+                            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
+                            if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
+                                if (root.Position - myRoot.Position).Magnitude < 30 then
+                                    hum.Health = 0
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+        task.wait(0.1)
+    end
+end)
+
+local NoclipEnabled = false
+makeToggle(CombatPage, "NoClip", function(state) NoclipEnabled = state end)
+
+RunService.Stepped:Connect(function()
+    if NoclipEnabled and LocalPlayer.Character then
+        pcall(function()
+            for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
+            end
+        end)
+    end
+end)
+
+-- ==========================================
+-- ABA 2: MOVIMENTO
+-- ==========================================
+makeLabel(MovePage, "Velocidade")
+local SpeedEnabled = false
+local CurrentSpeed = 16
+
+makeToggle(MovePage, "Speed Hack", function(state) SpeedEnabled = state end)
 makeSlider(MovePage, "WalkSpeed", 16, 250, 16, function(val) CurrentSpeed = val end)
 
 RunService.Heartbeat:Connect(function()
@@ -357,8 +344,123 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+makeLabel(MovePage, "Voo")
+local FlyEnabled = false
+local FlySpeed = 50
+local bg, bv
+
+makeToggle(MovePage, "Ativar Fly", function(state)
+    FlyEnabled = state
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+    
+    if FlyEnabled then
+        bg = Instance.new("BodyGyro", root) bg.P = 9e4 bg.maxTorque = Vector3.new(9e9, 9e9, 9e9) bg.cframe = root.CFrame
+        bv = Instance.new("BodyVelocity", root) bv.velocity = Vector3.new(0, 0.1, 0) bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        
+        task.spawn(function()
+            while FlyEnabled and LocalPlayer.Character and root do
+                local cam = workspace.CurrentCamera
+                local moveDir = Vector3.new()
+                local uis = UserInputService
+                if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CoordinateFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CoordinateFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CoordinateFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CoordinateFrame.RightVector end
+                bv.velocity = moveDir * FlySpeed
+                bg.cframe = cam.CoordinateFrame
+                RunService.RenderStepped:Wait()
+            end
+            if bg then bg:Destroy() end
+            if bv then bv:Destroy() end
+        end)
+    else
+        if bg then bg:Destroy() end
+        if bv then bv:Destroy() end
+    end
+end)
+
+makeSlider(MovePage, "Velocidade do Voo", 10, 200, 50, function(val) FlySpeed = val end)
+
 -- ==========================================
--- ABA DE CONFIG (Temas)
+-- ABA 3: OVOS (Turbo)
+-- ==========================================
+makeLabel(EggPage, "Automação de Ovos")
+
+local AutoHatchEnabled = false
+makeToggle(EggPage, "Auto Hatch (Turbo)", function(state) AutoHatchEnabled = state end)
+
+task.spawn(function()
+    while true do
+        if AutoHatchEnabled then
+            pcall(function()
+                local packages = ReplicatedStorage:FindFirstChild("Packages")
+                local index = packages and packages:FindFirstChild("_Index")
+                local knitPkg = index and index:FindFirstChild("sleitnick_knit@1.5.1")
+                local knit = knitPkg and knitPkg:FindFirstChild("knit")
+                local services = knit and knit:FindFirstChild("Services")
+                local eggService = services and services:FindFirstChild("EggHatchService")
+                local re = eggService and eggService:FindFirstChild("RE")
+                local hatchRemote = re and re:FindFirstChild("Hatch")
+                
+                if hatchRemote then
+                    hatchRemote:FireServer("Egg_4_1", 1)
+                end
+            end)
+        end
+        -- Delay mínimo pro celular não travar (0.05s = 20 tentativas por segundo)
+        task.wait(0.08) 
+    end
+end)
+
+-- ==========================================
+-- ABA 4: TELEPORTE
+-- ==========================================
+makeLabel(TpPage, "Lista de Jogadores")
+
+local function refreshPlayerList()
+    for _, child in ipairs(TpPage:GetChildren()) do
+        if child:IsA("TextButton") and child.Name == "PlayerTpBtn" then child:Destroy() end
+    end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local pBtn = Instance.new("TextButton", TpPage)
+            pBtn.Name = "PlayerTpBtn"
+            pBtn.Size = UDim2.new(1, 0, 0, 38)
+            pBtn.BackgroundColor3 = Theme.Box
+            pBtn.Text = "Ir até: " .. plr.Name
+            pBtn.TextColor3 = Theme.Text
+            pBtn.Font = Enum.Font.GothamBold
+            pBtn.TextSize = 12
+            pBtn.AutoButtonColor = false
+            Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
+            
+            pBtn.MouseButton1Click:Connect(function()
+                pcall(function()
+                    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                    end
+                end)
+            end)
+        end
+    end
+end
+
+local RefreshBtn = Instance.new("TextButton", TpPage)
+RefreshBtn.Size = UDim2.new(1, 0, 0, 38)
+RefreshBtn.BackgroundColor3 = Theme.Accent
+RefreshBtn.Text = "🔄 Atualizar Lista"
+RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshBtn.Font = Enum.Font.GothamBold
+RefreshBtn.TextSize = 12
+RefreshBtn.AutoButtonColor = false
+Instance.new("UICorner", RefreshBtn).CornerRadius = UDim.new(0, 6)
+RefreshBtn.MouseButton1Click:Connect(refreshPlayerList)
+task.spawn(function() while true do refreshPlayerList() task.wait(5) end end)
+
+-- ==========================================
+-- ABA 5: CONFIG
 -- ==========================================
 makeLabel(ConfigPage, "Temas do Painel")
 
@@ -367,7 +469,7 @@ local function updateTheme(newAccent)
     Title.TextColor3 = Theme.Accent
     MinBtn.TextColor3 = Theme.Accent
     FloatBtn.BackgroundColor3 = Theme.Accent
-    TabContainer:GetChildren()[1].BackgroundColor3 = Theme.Accent
+    btn1.BackgroundColor3 = Theme.Accent
     
     for _, p in ipairs(PagesContainer:GetChildren()) do
         if p:IsA("ScrollingFrame") then
@@ -413,3 +515,40 @@ btnPurple.TextColor3 = Theme.Text
 btnPurple.Font = Enum.Font.GothamBold
 Instance.new("UICorner", btnPurple).CornerRadius = UDim.new(0, 6)
 btnPurple.MouseButton1Click:Connect(function() updateTheme(Color3.fromRGB(150, 50, 255)) end)
+
+makeLabel(ConfigPage, "Desempenho")
+
+makeToggle(ConfigPage, "Ativar FPS Boost", function(state)
+    pcall(function()
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if state then
+                    if v.Material ~= Enum.Material.SmoothPlastic then v.Material = Enum.Material.SmoothPlastic end
+                    v.Reflectance = 0
+                end
+            elseif v:IsA("Decal") or v:IsA("Texture") then
+                v.Transparency = state and 1 or 0
+            end
+        end
+        if state then
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        else
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+        end
+    end)
+end)
+
+makeToggle(ConfigPage, "Remover Nevoeiro (Fog)", function(state)
+    pcall(function()
+        if state then
+            Lighting.FogEnd = 999999
+            Lighting.GlobalShadows = false
+            for _, v in ipairs(Lighting:GetChildren()) do
+                if v:IsA("Atmosphere") or v:IsA("Sky") then v.Parent = nil end
+            end
+        else
+            Lighting.FogEnd = 1000
+            Lighting.GlobalShadows = true
+        end
+    end)
+end)
