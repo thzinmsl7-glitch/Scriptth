@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- V54: Layout com abas na esquerda e conteúdo na direita.
+-- Correção: Slider da Escalada ativo e com teto maior.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -26,7 +26,7 @@ local Theme = {
 }
 
 -- ==========================================
--- UI BASE
+-- UI BASE (Mantida a sua estrutura)
 -- ==========================================
 local MainFrame = Instance.new("Frame", CORE_GUI)
 MainFrame.Size = UDim2.new(0, 500, 0, 350)
@@ -46,7 +46,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V54 - SIDEBAR"
+Title.Text = "MENOLI V56 - SIDEBAR"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -118,17 +118,14 @@ FloatBtn.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserI
 MinBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false FloatBtn.Visible = true end)
 FloatBtn.MouseButton1Click:Connect(function() if not floatMoved then MainFrame.Visible = true FloatBtn.Visible = false end end)
 
--- ==========================================
--- LAYOUT LATERAL (SIDEBAR)
--- ==========================================
+-- Layout Lateral
 local ContentFrame = Instance.new("Frame", MainFrame)
 ContentFrame.Size = UDim2.new(1, 0, 1, -40)
 ContentFrame.Position = UDim2.new(0, 0, 0, 40)
 ContentFrame.BackgroundTransparency = 1
 
--- Barra Lateral Esquerda (Abas)
 local TabContainer = Instance.new("Frame", ContentFrame)
-TabContainer.Size = UDim2.new(0, 120, 1, 0) -- 120 de largura
+TabContainer.Size = UDim2.new(0, 120, 1, 0)
 TabContainer.BackgroundTransparency = 1
 
 local UIPadTabs = Instance.new("UIPadding", TabContainer)
@@ -136,12 +133,11 @@ UIPadTabs.PaddingLeft = UDim.new(0, 8)
 UIPadTabs.PaddingTop = UDim.new(0, 10)
 
 local UIListTabs = Instance.new("UIListLayout", TabContainer)
-UIListTabs.FillDirection = Enum.FillDirection.Vertical -- Empilhado
+UIListTabs.FillDirection = Enum.FillDirection.Vertical
 UIListTabs.Padding = UDim.new(0, 8)
 
--- Área Direita (Conteúdo)
 local PagesContainer = Instance.new("Frame", ContentFrame)
-PagesContainer.Size = UDim2.new(1, -120, 1, 0) -- Preenche o resto
+PagesContainer.Size = UDim2.new(1, -120, 1, 0)
 PagesContainer.Position = UDim2.new(0, 120, 0, 0)
 PagesContainer.BackgroundTransparency = 1
 
@@ -173,7 +169,7 @@ local ConfigPage = createPage("Config")
 
 local function createTabBtn(text, page)
     local btn = Instance.new("TextButton", TabContainer)
-    btn.Size = UDim2.new(1, 0, 0, 35) -- Botão ocupa a largura toda da sidebar
+    btn.Size = UDim2.new(1, 0, 0, 35)
     btn.BackgroundColor3 = Theme.Box
     btn.Text = text
     btn.TextColor3 = Theme.Text
@@ -312,7 +308,7 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.5)
+        task.wait(0.1)
     end
 end)
 
@@ -331,7 +327,7 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ==========================================
--- ABA 2: MOVIMENTO
+-- ABA 2: MOVIMENTO (Com Escalada Dinâmica)
 -- ==========================================
 makeLabel(MovePage, "Velocidade")
 local SpeedEnabled = false
@@ -346,6 +342,53 @@ RunService.Heartbeat:Connect(function()
             local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
             if hum then hum.WalkSpeed = CurrentSpeed end
         end)
+    end
+end)
+
+makeLabel(MovePage, "Escalada")
+local ClimbEnabled = false
+local ClimbSpeed = 50
+local climbBV
+
+makeToggle(MovePage, "Ativar Speed Escalada", function(state)
+    ClimbEnabled = state
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    if ClimbEnabled then
+        if not climbBV then
+            climbBV = Instance.new("BodyVelocity")
+            climbBV.Name = "ClimbBoost"
+            climbBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            climbBV.Parent = char:FindFirstChild("HumanoidRootPart")
+        end
+    else
+        if climbBV then climbBV:Destroy() climbBV = nil end
+    end
+end)
+
+makeSlider(MovePage, "Velocidade de Escalada", 16, 500, 50, function(val) 
+    ClimbSpeed = val 
+    -- Força a atualização do corpo se ele já existir
+    if climbBV then
+        climbBV.Velocity = Vector3.new(0, ClimbSpeed, 0)
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if ClimbEnabled and LocalPlayer.Character and climbBV then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        
+        if hum and root then
+            if hum:GetState() == Enum.HumanoidStateType.Climbing then
+                -- Aplica a velocidade de escalada
+                climbBV.Velocity = Vector3.new(root.Velocity.X, ClimbSpeed, root.Velocity.Z)
+            else
+                -- Se não estiver na parede, desliga o boost
+                climbBV.Velocity = Vector3.new(0, 0, 0)
+            end
+        end
     end
 end)
 
