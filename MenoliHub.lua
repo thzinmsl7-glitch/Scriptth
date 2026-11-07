@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- V66: Hitkill Duplo (Health = 0 e Hook no Remote).
+-- V68: Mantém o Hitkill Health (V1) e adiciona o Scanner (V3). Remove o V2.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -26,7 +26,7 @@ local Theme = {
 }
 
 -- ==========================================
--- UI BASE
+-- UI BASE (Mantida a V54)
 -- ==========================================
 local MainFrame = Instance.new("Frame", CORE_GUI)
 MainFrame.Size = UDim2.new(0, 500, 0, 350)
@@ -46,7 +46,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V66 - DUAL HITKILL"
+Title.Text = "MENOLI V68 - HITKILL CLEAN"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -238,90 +238,7 @@ local function makeToggle(parent, text, callback)
     return btn
 end
 
--- ==========================================
--- ABA 1: COMBATE (Hitkill Duplo)
--- ==========================================
-makeLabel(CombatPage, "Hitkill em Mobs")
-
-local HitkillHealthEnabled = false
-makeToggle(CombatPage, "Hitkill (Health = 0) [V1]", function(state) HitkillHealthEnabled = state end)
-
-local HitkillRemoteEnabled = false
-makeToggle(CombatPage, "Hitkill (Hook Remote) [V2]", function(state) HitkillRemoteEnabled = state end)
-
--- Loop V1 (Health)
-task.spawn(function()
-    while true do
-        if HitkillHealthEnabled and LocalPlayer.Character then
-            pcall(function()
-                local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if myRoot then
-                    for _, obj in ipairs(workspace:GetDescendants()) do
-                        if obj:IsA("Model") and obj ~= LocalPlayer.Character then
-                            local hum = obj:FindFirstChildOfClass("Humanoid")
-                            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso") or obj:FindFirstChild("HitBox")
-                            if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
-                                if (root.Position - myRoot.Position).Magnitude < 35 then
-                                    hum.Health = 0
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-        task.wait(0.1)
-    end
-end)
-
--- Loop V2 (Hook Remote)
-local oldFireServer
-oldFireServer = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    
-    -- Se o hitkill remote tá ligado e é um FireServer
-    if HitkillRemoteEnabled and method == "FireServer" then
-        local args = {...}
-        local name = self.Name
-        
-        -- Verifica se o remote é de dano (NpcDamage ou TakeDamage)
-        if string.find(string.lower(name), "damage") or string.find(string.lower(name), "hit") then
-            -- Multiplica o dano (geralmente o 2º argumento é o valor)
-            for i, v in pairs(args) do
-                if type(v) == "number" and v > 0 then
-                    args[i] = v * 99999
-                end
-            end
-        end
-        
-        return oldFireServer(self, unpack(args))
-    end
-    
-    return oldFireServer(self, ...)
-end)
-
-local NoclipEnabled = false
-makeToggle(CombatPage, "NoClip", function(state) NoclipEnabled = state end)
-
-RunService.Stepped:Connect(function()
-    if NoclipEnabled and LocalPlayer.Character then
-        pcall(function()
-            for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
-            end
-        end)
-    end
-end)
-
--- ==========================================
--- ABA 2: MOVIMENTO
--- ==========================================
-makeLabel(MovePage, "Velocidade")
-local SpeedEnabled = false
-local CurrentSpeed = 16
-
-makeToggle(MovePage, "Speed Hack", function(state) SpeedEnabled = state end)
-makeSlider = function(parent, text, min, max, default, callback)
+local function makeSlider(parent, text, min, max, default, callback)
     local SliderFrame = Instance.new("Frame", parent)
     SliderFrame.Size = UDim2.new(1, 0, 0, 48)
     SliderFrame.BackgroundTransparency = 1
@@ -364,6 +281,94 @@ makeSlider = function(parent, text, min, max, default, callback)
     UserInputService.InputChanged:Connect(function(input) if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then updateValue(input) end end)
 end
 
+-- ==========================================
+-- ABA 1: COMBATE (V1 + V3)
+-- ==========================================
+makeLabel(CombatPage, "Hitkill V1 (Health)")
+
+local HitkillV1Enabled = false
+makeToggle(CombatPage, "Ativar Hitkill (Vida = 0)", function(state) HitkillV1Enabled = state end)
+
+-- Loop V1
+task.spawn(function()
+    while true do
+        if HitkillV1Enabled and LocalPlayer.Character then
+            pcall(function()
+                local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myRoot then
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("Model") and obj ~= LocalPlayer.Character then
+                            local hum = obj:FindFirstChildOfClass("Humanoid")
+                            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso") or obj:FindFirstChild("HitBox")
+                            if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
+                                if (root.Position - myRoot.Position).Magnitude < 35 then
+                                    hum.Health = 0
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+        task.wait(0.1)
+    end
+end)
+
+makeLabel(CombatPage, "Hitkill V3 (Scanner)")
+
+local HitkillV3Enabled = false
+makeToggle(CombatPage, "Ativar Hitkill (Forçar Remote)", function(state) HitkillV3Enabled = state end)
+
+-- Função que acha o Remote
+local function getNpcDamageRemote()
+    local events = ReplicatedStorage:FindFirstChild("Events")
+    local fight = events and events:FindFirstChild("Fight")
+    return fight and fight:FindFirstChild("Re_NpcDamage")
+end
+
+-- Loop V3
+task.spawn(function()
+    while true do
+        if HitkillV3Enabled and LocalPlayer.Character then
+            local remote = getNpcDamageRemote()
+            if remote then
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and obj ~= LocalPlayer.Character then
+                        local hum = obj:FindFirstChildOfClass("Humanoid")
+                        if hum and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
+                            pcall(function()
+                                remote:FireServer(obj.Name)
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
+
+local NoclipEnabled = false
+makeToggle(CombatPage, "NoClip", function(state) NoclipEnabled = state end)
+
+RunService.Stepped:Connect(function()
+    if NoclipEnabled and LocalPlayer.Character then
+        pcall(function()
+            for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
+            end
+        end)
+    end
+end)
+
+-- ==========================================
+-- ABA 2: MOVIMENTO
+-- ==========================================
+makeLabel(MovePage, "Velocidade")
+local SpeedEnabled = false
+local CurrentSpeed = 16
+
+makeToggle(MovePage, "Speed Hack", function(state) SpeedEnabled = state end)
 makeSlider(MovePage, "WalkSpeed", 16, 250, 16, function(val) CurrentSpeed = val end)
 
 RunService.Heartbeat:Connect(function()
@@ -374,6 +379,45 @@ RunService.Heartbeat:Connect(function()
         end)
     end
 end)
+
+makeLabel(MovePage, "Voo")
+local FlyEnabled = false
+local FlySpeed = 50
+local bg, bv
+
+makeToggle(MovePage, "Ativar Fly", function(state)
+    FlyEnabled = state
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+    
+    if FlyEnabled then
+        bg = Instance.new("BodyGyro", root) bg.P = 9e4 bg.maxTorque = Vector3.new(9e9, 9e9, 9e9) bg.cframe = root.CFrame
+        bv = Instance.new("BodyVelocity", root) bv.velocity = Vector3.new(0, 0.1, 0) bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        
+        task.spawn(function()
+            while FlyEnabled and LocalPlayer.Character and root do
+                local cam = workspace.CurrentCamera
+                local moveDir = Vector3.new()
+                local uis = UserInputService
+                if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CoordinateFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CoordinateFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CoordinateFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CoordinateFrame.RightVector end
+                bv.velocity = moveDir * FlySpeed
+                bg.cframe = cam.CoordinateFrame
+                RunService.RenderStepped:Wait()
+            end
+            if bg then bg:Destroy() end
+            if bv then bv:Destroy() end
+        end)
+    else
+        if bg then bg:Destroy() end
+        if bv then bv:Destroy() end
+    end
+end)
+
+makeSlider(MovePage, "Velocidade do Voo", 10, 200, 50, function(val) FlySpeed = val end)
 
 -- ==========================================
 -- ABA 3: OVOS
