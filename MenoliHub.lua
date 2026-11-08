@@ -1,5 +1,5 @@
 -- language: Lua, target: Roblox Delta Executor
--- V68: Mantém o Hitkill Health (V1) e adiciona o Scanner (V3). Remove o V2.
+-- V65: Hitkill Duplo (Local + Remoto via Re_NpcDamage)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -26,7 +26,7 @@ local Theme = {
 }
 
 -- ==========================================
--- UI BASE (Mantida a V54)
+-- UI BASE
 -- ==========================================
 local MainFrame = Instance.new("Frame", CORE_GUI)
 MainFrame.Size = UDim2.new(0, 500, 0, 350)
@@ -46,7 +46,7 @@ local Title = Instance.new("TextLabel", TopBar)
 Title.Size = UDim2.new(1, -100, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "MENOLI V68 - HITKILL CLEAN"
+Title.Text = "MENOLI V65 - SIDEBAR"
 Title.TextColor3 = Theme.Accent
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 13
@@ -282,26 +282,26 @@ local function makeSlider(parent, text, min, max, default, callback)
 end
 
 -- ==========================================
--- ABA 1: COMBATE (V1 + V3)
+-- ABA 1: COMBATE (HITKILL DUPLO)
 -- ==========================================
-makeLabel(CombatPage, "Hitkill V1 (Health)")
+makeLabel(CombatPage, "Combate")
 
-local HitkillV1Enabled = false
-makeToggle(CombatPage, "Ativar Hitkill (Vida = 0)", function(state) HitkillV1Enabled = state end)
+-- --- VERSÃO 1: LOCAL (sua versão original) ---
+local HitkillEnabled = false
+makeToggle(CombatPage, "Hitkill em Mobs [LOCAL]", function(state) HitkillEnabled = state end)
 
--- Loop V1
 task.spawn(function()
     while true do
-        if HitkillV1Enabled and LocalPlayer.Character then
+        if HitkillEnabled and LocalPlayer.Character then
             pcall(function()
                 local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if myRoot then
                     for _, obj in ipairs(workspace:GetDescendants()) do
                         if obj:IsA("Model") and obj ~= LocalPlayer.Character then
                             local hum = obj:FindFirstChildOfClass("Humanoid")
-                            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso") or obj:FindFirstChild("HitBox")
+                            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
                             if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
-                                if (root.Position - myRoot.Position).Magnitude < 35 then
+                                if (root.Position - myRoot.Position).Magnitude < 30 then
                                     hum.Health = 0
                                 end
                             end
@@ -310,56 +310,78 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.1)
+        task.wait(0.2)
     end
 end)
 
-makeLabel(CombatPage, "Hitkill V3 (Scanner)")
+-- --- VERSÃO 2: REMOTO (Re_NpcDamage) ---
+local HitkillRemoteEnabled = false
+local Re_NpcDamage = ReplicatedStorage:WaitForChild("Events"):WaitForChild("Fight"):WaitForChild("Re_NpcDamage")
 
-local HitkillV3Enabled = false
-makeToggle(CombatPage, "Ativar Hitkill (Forçar Remote)", function(state) HitkillV3Enabled = state end)
-
--- Função que acha o Remote
-local function getNpcDamageRemote()
-    local events = ReplicatedStorage:FindFirstChild("Events")
-    local fight = events and events:FindFirstChild("Fight")
-    return fight and fight:FindFirstChild("Re_NpcDamage")
+local function remoteKillMob(model)
+    if not Re_NpcDamage then return false end
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health <= 0 then return false end
+    if Players:GetPlayerFromCharacter(model) then return false end
+    
+    local success, err = pcall(function()
+        Re_NpcDamage:FireServer(model.Name)
+    end)
+    return success
 end
 
--- Loop V3
-task.spawn(function()
-    while true do
-        if HitkillV3Enabled and LocalPlayer.Character then
-            local remote = getNpcDamageRemote()
-            if remote then
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj:IsA("Model") and obj ~= LocalPlayer.Character then
-                        local hum = obj:FindFirstChildOfClass("Humanoid")
-                        if hum and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
-                            pcall(function()
-                                remote:FireServer(obj.Name)
-                            end)
-                        end
+local function remoteKillAllNearby(maxDist)
+    maxDist = maxDist or 100
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return 0 end
+    
+    local count = 0
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj ~= LocalPlayer.Character then
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local root = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso")
+            if hum and root and hum.Health > 0 and not Players:GetPlayerFromCharacter(obj) then
+                if (root.Position - myRoot.Position).Magnitude <= maxDist then
+                    if remoteKillMob(obj) then
+                        count = count + 1
                     end
                 end
             end
+        end
+    end
+    return count
+end
+
+makeToggle(CombatPage, "Hitkill em Mobs [REMOTO]", function(state)
+    HitkillRemoteEnabled = state
+end)
+
+task.spawn(function()
+    while true do
+        if HitkillRemoteEnabled and LocalPlayer.Character then
+            pcall(function()
+                remoteKillAllNearby(60)
+            end)
         end
         task.wait(0.5)
     end
 end)
 
-local NoclipEnabled = false
-makeToggle(CombatPage, "NoClip", function(state) NoclipEnabled = state end)
-
-RunService.Stepped:Connect(function()
-    if NoclipEnabled and LocalPlayer.Character then
-        pcall(function()
-            for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
-            end
-        end)
-    end
+local btnKillAll = Instance.new("TextButton", CombatPage)
+btnKillAll.Size = UDim2.new(1, 0, 0, 38)
+btnKillAll.BackgroundColor3 = Theme.Box
+btnKillAll.Text = "MATAR TUDO [REMOTO]"
+btnKillAll.TextColor3 = Theme.Text
+btnKillAll.Font = Enum.Font.GothamBold
+btnKillAll.TextSize = 12
+btnKillAll.AutoButtonColor = false
+Instance.new("UICorner", btnKillAll).CornerRadius = UDim.new(0, 6)
+btnKillAll.MouseButton1Click:Connect(function()
+    local qtd = remoteKillAllNearby(200)
+    print("[Menoli] Remoto: " .. qtd .. " mobs alvo.")
 end)
+
+makeLabel(CombatPage, "Remote: Re_NpcDamage (Events > Fight)")
 
 -- ==========================================
 -- ABA 2: MOVIMENTO
@@ -383,46 +405,60 @@ end)
 makeLabel(MovePage, "Voo")
 local FlyEnabled = false
 local FlySpeed = 50
-local bg, bv
+local bg, bv, flyConn
 
 makeToggle(MovePage, "Ativar Fly", function(state)
     FlyEnabled = state
     local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
     if FlyEnabled then
-        bg = Instance.new("BodyGyro", root) bg.P = 9e4 bg.maxTorque = Vector3.new(9e9, 9e9, 9e9) bg.cframe = root.CFrame
-        bv = Instance.new("BodyVelocity", root) bv.velocity = Vector3.new(0, 0.1, 0) bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-        
-        task.spawn(function()
-            while FlyEnabled and LocalPlayer.Character and root do
-                local cam = workspace.CurrentCamera
-                local moveDir = Vector3.new()
-                local uis = UserInputService
-                if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CoordinateFrame.LookVector end
-                if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CoordinateFrame.LookVector end
-                if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CoordinateFrame.RightVector end
-                if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CoordinateFrame.RightVector end
-                bv.velocity = moveDir * FlySpeed
-                bg.cframe = cam.CoordinateFrame
-                RunService.RenderStepped:Wait()
-            end
-            if bg then bg:Destroy() end
-            if bv then bv:Destroy() end
+        bg = Instance.new("BodyGyro")
+        bg.P = 9e4
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.cframe = root.CFrame
+        bg.Parent = root
+
+        bv = Instance.new("BodyVelocity")
+        bv.velocity = Vector3.new(0, 0.1, 0)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        bv.Parent = root
+
+        flyConn = RunService.RenderStepped:Connect(function()
+            if not FlyEnabled or not root or not root.Parent then return end
+            local cam = workspace.CurrentCamera
+            local moveDir = Vector3.new()
+            local uis = UserInputService
+            if uis:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.CFrame.RightVector end
+            bv.velocity = moveDir * FlySpeed
+            bg.cframe = cam.CFrame
         end)
     else
-        if bg then bg:Destroy() end
-        if bv then bv:Destroy() end
+        if flyConn then flyConn:Disconnect() flyConn = nil end
+        if bg then bg:Destroy() bg = nil end
+        if bv then bv:Destroy() bv = nil end
     end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if flyConn then flyConn:Disconnect() flyConn = nil end
+    if bg then bg:Destroy() bg = nil end
+    if bv then bv:Destroy() bv = nil end
+    FlyEnabled = false
 end)
 
 makeSlider(MovePage, "Velocidade do Voo", 10, 200, 50, function(val) FlySpeed = val end)
 
 -- ==========================================
--- ABA 3: OVOS
+-- ABA 3: OVOS (Turbo)
 -- ==========================================
 makeLabel(EggPage, "Automação de Ovos")
+
 local AutoHatchEnabled = false
 makeToggle(EggPage, "Auto Hatch (Turbo)", function(state) AutoHatchEnabled = state end)
 
@@ -444,7 +480,7 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.08) 
+        task.wait(0.05) 
     end
 end)
 
@@ -555,12 +591,12 @@ makeLabel(ConfigPage, "Desempenho")
 makeToggle(ConfigPage, "Ativar FPS Boost", function(state)
     pcall(function()
         for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") then
+            if v:IsA("BasePart") and not v:IsDescendantOf(LocalPlayer.Character) then
                 if state then
                     if v.Material ~= Enum.Material.SmoothPlastic then v.Material = Enum.Material.SmoothPlastic end
                     v.Reflectance = 0
                 end
-            elseif v:IsA("Decal") or v:IsA("Texture") then
+            elseif (v:IsA("Decal") or v:IsA("Texture")) and not v:IsDescendantOf(LocalPlayer.Character) then
                 v.Transparency = state and 1 or 0
             end
         end
